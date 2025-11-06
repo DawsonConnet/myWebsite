@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from db.session import create_db_and_tables, SessionDep
 from api.v1.api import api_router
+from fastapi.middleware.cors import CORSMiddleware
 
 #Add this
 @asynccontextmanager
@@ -13,8 +14,16 @@ async def lifespan(app: FastAPI):
 #Modify our FastAPI app
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(api_router, prefix="/api/v1")
+# Allow requests from your Svelte frontend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://10.120.1.21:5173"],  # frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],  # allow all HTTP methods
+    allow_headers=["*"],  # allow all headers
+)
 
+app.include_router(api_router, prefix="/api/v1") 
 
 #Define our routes
 @app.get("/")

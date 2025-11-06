@@ -9,7 +9,7 @@ router = APIRouter()
 def get_all_users(session: SessionDep):
     statement = select(User)
     users = session.exec(statement).all()
-    return {"users": users, "count": len(users)}
+    return users
 
 #Create route for GET USER
 @router.get("/{user_id}")
