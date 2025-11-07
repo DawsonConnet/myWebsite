@@ -24,7 +24,8 @@
             const response = await fetch('http://10.120.1.21:8000/api/v1/users');
 
             if (!response.ok) throw new Error('Failed to fetch');
-                users = await response.json();
+                const data = await response.json();
+                users = data.users;
         } catch (e) {
             error = e.message;
         } finally {

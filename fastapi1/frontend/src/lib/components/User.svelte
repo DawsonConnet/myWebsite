@@ -3,8 +3,6 @@
 	let {username, full_name, movies, id, email, onDelete} = $props();
 </script>
 <h2>Username: {username}</h2>
-<p>Full_name: {full_name}</p>
-<p>movies: {movies}</p>
 <p>id: {id}</p>
 <p>email: {email}</p>
 <button class="delete-btn" onclick={() => onDelete(id)}>Delete</button>
