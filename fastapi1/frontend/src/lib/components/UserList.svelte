@@ -92,7 +92,6 @@
 </script>
 
 
-<h1>Users</h1>
 <!-- Pagination Controls - Results per page -->
 <div class="pagination-controls">
     <label for="perPage">Results per page: </label>
