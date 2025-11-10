@@ -1,15 +1,19 @@
-from sqlmodel import select
-from fastapi import APIRouter, HTTPException
+from sqlmodel import select, func
+from fastapi import APIRouter, HTTPException, Response
 from db.session import SessionDep
 from db.models import User
 
 router = APIRouter()
 
 @router.get("/")
-def get_all_users(session: SessionDep):
-    statement = select(User)
+def get_all_users(session: SessionDep, response: Response, perPage: int = 10, curPage: int = 1):
+    count_statement = select(func.count(User.id))
+    total_users = session.exec(count_statement).one()
+    offset_value = (curPage - 1) * perPage
+    statement = select(User).order_by(User.id).offset(offset_value).limit(perPage)
     users = session.exec(statement).all()
-    return users
+    response.headers["X-Total-Count"] = str(total_users)
+    return {"users": users, "count": len(users)}
 
 #Create route for GET USER
 @router.get("/{user_id}")
