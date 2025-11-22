@@ -4,8 +4,8 @@
 
     let loading = $state(false); //Controls whether or not the loading message is dispalyed or not
     let error = $state(null); //Controls if error message displayed
-    
-    let users: any[];
+
+    let users = $state<any[]>([]);
     let totalUsers = $state(0);
     let curPage = $state(1);
     let selectedResults = $state("10");
@@ -13,6 +13,7 @@
     let totalPages = $derived(totalUsers > 0 ? Math.ceil(totalUsers / perPageResults) : 1);
     let isPrevDisabled = $derived(curPage <= 1);
     let isNextDisabled = $derived(curPage >= totalPages);
+    let searchTerm = $state("");
 
     //When our page loads call fetch users
     onMount(() => {
@@ -25,7 +26,7 @@
         error = null;
         
         try {
-            const response = await fetch(`http://10.120.1.21:8000/api/v1/users?perPage=${perPageResults}&curPage=${curPage}`);
+            const response = await fetch(`http://10.120.1.21:8000/api/v1/users?perPage=${perPageResults}&curPage=${curPage}&searchTerm=${searchTerm}`);
 
             if (!response.ok) throw new Error('Failed to fetch');
             
@@ -78,8 +79,7 @@
         }
     }
     
-    function goToPage(e: Event, pageNum: number) {
-        e.preventDefault();
+    function goToPage(pageNum: number) {
         curPage = pageNum + 1;
         fetchUsers();
     }
@@ -89,10 +89,19 @@
         fetchUsers();
     }
 
+    function search(){
+        curPage=1;
+        fetchUsers();
+    }
 </script>
 
 
 <!-- Pagination Controls - Results per page -->
+<div>
+    Search:<input type=text bind:value={searchTerm} oninput={search}>
+</div>
+
+
 <div class="pagination-controls">
     <label for="perPage">Results per page: </label>
     <select id="perPage" bind:value={selectedResults} onchange={handlePerPageChange}>
@@ -135,7 +144,7 @@
     <ul class="pagination-numbers">
         {#each Array(totalPages).fill(0) as _, i}
             <li class:active={curPage === i + 1}>
-                <a href="#" onclick={(e) => goToPage(e, i)}>{i + 1}</a>
+                <button onclick={() => goToPage(i)}>{i + 1}</button>
             </li>
         {/each}
     </ul>
@@ -214,7 +223,7 @@
         display: inline-block;
     }
     
-    .pagination-numbers li a {
+    .pagination-numbers li button {
         display: block;
         padding: 8px 12px;
         background-color: #f0f0f0;
@@ -225,12 +234,12 @@
         transition: background-color 0.2s;
     }
     
-    .pagination-numbers li a:hover {
+    .pagination-numbers li button:hover {
         background-color: #007bff;
         color: white;
     }
-    
-    .pagination-numbers li.active a {
+
+    .pagination-numbers li.active button {
         background-color: #007bff;
         color: white;
         font-weight: bold;

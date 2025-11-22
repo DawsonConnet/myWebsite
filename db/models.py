@@ -7,6 +7,8 @@ class User(SQLModel, table=True):
     username: str = Field(index=True)
     email: str
     full_name: str
+    hashed_password: str
+    disabled: bool = False
     movies: list["Movie"] = Relationship(back_populates="user")
 
 class Movie(SQLModel, table=True):
