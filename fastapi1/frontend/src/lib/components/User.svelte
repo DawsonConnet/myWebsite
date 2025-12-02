@@ -1,5 +1,4 @@
 <script lang="ts">
-  	//You may have more props than this!
 	let {username, full_name, movies, id, email, onDelete} = $props();
 </script>
 <h2>Username: {username}</h2>

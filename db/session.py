@@ -2,7 +2,6 @@ from sqlmodel import Session, Field, SQLModel, create_engine, select, Relationsh
 from typing import Annotated
 from fastapi import Depends
 
-#SQL Code Setup
 sqlite_file_name = "database.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
 

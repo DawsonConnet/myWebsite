@@ -30,7 +30,6 @@
     token = null;
 
     try {
-      // Create FormData for OAuth2PasswordRequestForm
       const formData = new FormData();
       formData.append('grant_type', "password");
       formData.append('username', username);
@@ -49,10 +48,8 @@
       const data: Token = await response.json();
       token = data;
       
-      // Store token in authstore for future requests
       authStore.login(data.access_token, null);
       
-      // Clear form
       username = '';
       password = '';
       

@@ -30,16 +30,24 @@ class TokenData(BaseModel):
 
 
 class UserResponse(BaseModel):
+    id: int
     username: str
     email: str | None = None
     full_name: str | None = None
     disabled: bool | None = None
+
 class UserCreate(BaseModel):
     username: str
     email: str | None = None
     full_name: str | None = None
     password: str
     disabled: bool | None = False
+
+class UserUpdate(BaseModel):
+    username: str | None = None
+    email: str | None = None
+    full_name: str | None = None
+    password: str | None = None
 
 class UserInDB(UserResponse):
     hashed_password: str
@@ -61,6 +69,7 @@ def get_password_hash(password):
 def get_user(session: SessionDep, username: str):
     user = session.exec(select(UserModel).where(UserModel.username == username)).first()
     return user
+
 def authenticate_user(session: SessionDep, username: str, password: str):
     user = get_user(session, username)
     if not user:
@@ -154,7 +163,6 @@ def get_all_users(session: SessionDep, response: Response, perPage: int = 10, cu
     response.headers["X-Total-Count"] = str(total_users)
     return {"users": users, "count": len(users)}
 
-#Create route for GET USER
 @router.get("/{user_id}")
 def get_user_by_id(user_id: int, session: SessionDep):
     user = session.get(UserModel, user_id)
@@ -164,14 +172,12 @@ def get_user_by_id(user_id: int, session: SessionDep):
 
 @router.post("/", status_code=201)
 def create_new_user(user: UserCreate, session: SessionDep):
-    # Check if username already exists
     existing_user = session.exec(
         select(UserModel).where(UserModel.username == user.username)
     ).first()
     if existing_user:
         raise HTTPException(status_code=400, detail="Username already exists")
     
-    # Create new user with hashed password
     hashed_password = get_password_hash(user.password)
     db_user = UserModel(
         username=user.username,
@@ -187,23 +193,57 @@ def create_new_user(user: UserCreate, session: SessionDep):
     return db_user
 
 @router.put("/{user_id}")
-def update_user(user_id: int, user: UserModel, session: SessionDep):
+def update_user(
+    user_id: int, 
+    user: UserUpdate, 
+    session: SessionDep,
+    current_user: Annotated[UserModel, Depends(get_current_active_user)]
+):
     db_user = session.get(UserModel, user_id)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
-    db_user.username = user.username
-    db_user.email = user.email
-    db_user.full_name = user.full_name
+    
+    if db_user.id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only update your own profile")
+    
+    if user.username is not None:
+        existing_user = session.exec(
+            select(UserModel).where(
+                UserModel.username == user.username,
+                UserModel.id != user_id
+            )
+        ).first()
+        if existing_user:
+            raise HTTPException(status_code=400, detail="Username already exists")
+        db_user.username = user.username
+    
+    if user.email is not None:
+        db_user.email = user.email
+    
+    if user.full_name is not None:
+        db_user.full_name = user.full_name
+    
+    if user.password is not None:
+        db_user.hashed_password = get_password_hash(user.password)
+    
     session.add(db_user)
     session.commit()
     session.refresh(db_user)
     return db_user
 
 @router.delete("/{user_id}", status_code=204)
-def delete_user(user_id: int, session: SessionDep):
+def delete_user(
+    user_id: int, 
+    session: SessionDep,
+    current_user: Annotated[UserModel, Depends(get_current_active_user)]
+):
     user = session.get(UserModel, user_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+    
+    if user.id != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only delete your own account")
+    
     session.delete(user)
     session.commit()
     return None
